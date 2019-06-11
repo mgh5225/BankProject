@@ -130,18 +130,18 @@ public:
 	static date* getNow() {
 		std::time_t t = std::time(0);
 		std::tm* now = std::localtime(&t);
-		return new date(now->tm_year+1900, now->tm_mon, now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
+		return new date(now->tm_year+1900, now->tm_mon+1, now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
 	}
 	static int deltaTime(date first, date second) {
-		tm fTime;
-		fTime.tm_year = first.year;
-		fTime.tm_mon = first.month;
+		tm fTime = {};
+		fTime.tm_year = first.year-1900;
+		fTime.tm_mon = first.month-1;
 		fTime.tm_mday = first.day;
-		tm sTime;
-		sTime.tm_year = second.year;
-		sTime.tm_mon = second.month;
+		tm sTime = {};
+		sTime.tm_year = second.year-1900;
+		sTime.tm_mon = second.month-1;
 		sTime.tm_mday = second.day;
-		return difftime(mktime(&fTime), mktime(&sTime)) / 86400;
+		return (mktime(&sTime)-mktime(&fTime)) / 86400;
 	}
 	bool operator==(date& obj) {
 		return year == obj.year && month == obj.month && day == obj.day;

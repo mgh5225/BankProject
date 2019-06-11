@@ -2,6 +2,7 @@
 #include <iostream>
 #include<string>
 #include "admin.h"
+using namespace std;
 void loginPanel();
 void signupPanel();
 void userLogin();
@@ -11,30 +12,36 @@ void adminSignup();
 void userPanel(person* u);
 void adminPanel(admin* a);
 int main(){
-	cout << "[ALERT] ALL USERS LOAD FROM FILE AT THE FRIST TIME AND SAVE TO FILE WHEN YOU EXIT THE PROGRAM [ALERT]" << endl;
-	person::readFromFile();
-	while (true) {
-		cout << endl;
-		cout << "[1] Login" << endl;
-		cout << "[2] Signup" << endl;
-		cout << "[3] Exit" << endl;
-		cout << "[#] ";
-		int n;
-		cin >> n;
-		switch (n)
-		{
-		case 1:
-			loginPanel();
-			break;
-		case 2:
-			signupPanel();
-			break;
-		case 3:
-			person::saveToFile();
-			return 0;
-		default:
-			break;
+	try {
+		cout << "[ALERT] ALL USERS LOAD FROM FILE AT THE FRIST TIME AND SAVE TO FILE WHEN YOU EXIT THE PROGRAM [ALERT]" << endl;
+		person::readFromFile();
+		while (true) {
+			cout << endl;
+			cout << "[1] Login" << endl;
+			cout << "[2] Signup" << endl;
+			cout << "[3] Exit" << endl;
+			cout << "[#] ";
+			int n;
+			cin >> n;
+			switch (n)
+			{
+			case 1:
+				loginPanel();
+				break;
+			case 2:
+				signupPanel();
+				break;
+			case 3:
+				person::saveToFile();
+				return 0;
+			default:
+				break;
+			}
 		}
+	}
+	catch (...) {
+		cout << "Get Error!" << endl;
+		return 0;
 	}
 }
 void loginPanel() {
@@ -93,7 +100,7 @@ void userLogin(){
 	cout << "password:";
 	string password;
 	cin >> ws >> password;
-	auto log = person::login(username, password);
+	pair<loginCode,person*> log = person::login(username, password);
 	if (!dynamic_cast<admin*>(log.second)) {
 		switch (log.first)
 		{
@@ -123,26 +130,32 @@ void adminLogin(){
 	cout << "password:";
 	string password;
 	cin >> ws >> password;
-	auto log = person::login(username, password);
-	if (dynamic_cast<admin*>(log.second)) {
-		switch (log.first)
-		{
-		case::loginCode::WRONGUSER:
-			cout << "username does not exist" << endl;
-			break;
-		case loginCode::WRONGPASS:
-			cout << "Password is wrong" << endl;
-			break;
-		case loginCode::SUCCESS:
-			cout << "Login successfuly" << endl;
-			adminPanel(dynamic_cast<admin*>(log.second));
-			break;
-		default:
-			break;
+	try {
+
+		auto log = person::login(username, password);
+		if (dynamic_cast<admin*>(log.second)) {
+			switch (log.first)
+			{
+			case::loginCode::WRONGUSER:
+				cout << "username does not exist" << endl;
+				break;
+			case loginCode::WRONGPASS:
+				cout << "Password is wrong" << endl;
+				break;
+			case loginCode::SUCCESS:
+				cout << "Login successfuly" << endl;
+				adminPanel(dynamic_cast<admin*>(log.second));
+				break;
+			default:
+				break;
+			}
+		}
+		else {
+			cout << "username dose not exist" << endl;
 		}
 	}
-	else {
-		cout << "username dose not exist" << endl;
+	catch (accountException ex) {
+		cout << ex.what() << endl;
 	}
 }
 void userSignup(){
@@ -232,6 +245,7 @@ void userPanel(person* u){
 				cout << "You dont have any accounts" << endl;
 				continue;
 			}
+			cout << "------------------------------------------------------------" << endl;
 			for (auto a : accounts) {
 				cout << "ID: " << a->getId() << endl;
 				cout << "Type: ";
@@ -274,17 +288,69 @@ void userPanel(person* u){
 				a->getCEDate().first.print(style::YYYY_MM_DD);
 				cout << "Expire date: ";
 				a->getCEDate().second.print(style::YYYY_MM_DD);
-				cout << "------------------------------------------------------------------------------------------------------------------------" << endl;
+				cout << "------------------------------------------------------------" << endl;
 			}
 		}
 		else if (n == 2) {
-
+			string first, second;
+			cout << "First account ID: ";
+			cin >> first;
+			cout << "Second account ID: ";
+			cin >> second;
+			double balance;
+			cout << "Balance: ";
+			cin >> balance;
+			bool ans= u->moveMoney(first, second, balance);
+			if (ans) cout << "Money transfer success" << endl;
+			else cout << "Money transfer faild" << endl;
 		}
 		else if (n == 3) {
-
+			while (true) {
+				try {
+					cout << "mode: " << endl;
+					cout << "[1] Short term" << endl;
+					cout << "[2] Long term" << endl;
+					cout << "[3] Good loan" << endl;
+					int m;
+					do {
+						cout << "[#] ";
+						cin >> m;
+					} while (m <= 0 || m > 3);
+					mode type=mode::SHORTTERM;
+					switch (m)
+					{
+					case 1: type = mode::SHORTTERM; break;
+					case 2: type: mode::LONGTERM; break;
+					case 3: type = mode::GOODLOAN; break;
+					}
+					cout << "balance: ";
+					double balance;
+					cin >> balance;
+					account* acc = u->craeteNewAccount(type, balance);
+					cout << "account ID: " << acc->getId() << endl;
+					break;
+				}
+				catch (personException ex) {
+					cout << ex.what() << endl;
+				}
+				catch (accountException ex) {
+					cout << ex.what() << endl;
+				}
+			}
 		}
 		else if (n == 4) {
-
+			cout << "------------------------------------------------------------" << endl;
+			for (int i = 0; i < u->getTimeOfADs().size() - 1; i++) {
+				cout << "Enter Time: ";
+				u->getTimeOfADs()[i].first.print(style::YY_MM_DD_HH_MM_SS);
+				cout << "Exit Time: ";
+				u->getTimeOfADs()[i].second.print(style::YY_MM_DD_HH_MM_SS);
+				cout << "------------------------------------------------------------" << endl;
+			}
+			cout << "Enter Time: ";
+			u->getTimeOfADs().back().first.print(style::YY_MM_DD_HH_MM_SS);
+			cout << "Exit Time: Notyet" << endl;
+			cout << "------------------------------------------------------------" << endl;
 		}
 		else if (n == 5) {
 

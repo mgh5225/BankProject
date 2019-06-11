@@ -114,7 +114,7 @@ public:
 		}
 		int delta = date::deltaTime(creationDate, *date::getNow());
 		this->type = type;
-		balance += balance * getProfit() * delta;
+		setBalance( balance * getProfit() * delta );
 		creationDate = *date::getNow();
 	}
 	void setSituation(status situation) {
@@ -143,7 +143,7 @@ public:
 		if (creationDate == expireDate) throw accountEX;
 		int delta = date::deltaTime(creationDate, *date::getNow());
 		if (delta > 0) {
-			balance += balance * getProfit() * delta;
+			setBalance( balance * getProfit() * delta);
 		}
 	}
 };

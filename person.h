@@ -70,6 +70,8 @@ protected:
 public:
 	person() {
 		isOnline = code::OFFLINE;
+		accounts = nullptr;
+		timeOfADs = nullptr;
 	}
 	person(string name, date birthDate, string username, string password) {
 		if (found(username)) throw personEX;
@@ -119,7 +121,7 @@ public:
 					stream2.read((char*)p,size);
 					p->timeOfADs = new vector<pair<date, date>>;
 					p->accounts = new vector<account*>;
-					persons.push_back(p);
+					persons.push_back(new person(*p));
 					size_t l;
 					stream >> l;
 					for (int i = 0; i < l; i++) {
@@ -131,7 +133,7 @@ public:
 					for (int i = 0; i < l; i++) {
 						account* acc = new account;
 						stream2.read((char*)acc, sizeof(account));
-						p->accounts->push_back(acc);
+						p->accounts->push_back(new account(*acc));
 					}
 				}
 				stream2.close();
@@ -207,9 +209,16 @@ public:
 	const vector<account*> getAccounts() {
 		return *accounts;
 	}
-	bool moveMoney(account* first, account* second, double balance) {
+	bool moveMoney(string f, string s, double balance) {
 		if (isOnline == code::OFFLINE)return false;
 		if (balance < 0) return false;
+		account * first=nullptr,* second=nullptr;
+		for (auto a : *accounts) {
+			if (a->getId() == f && !first) first = a;
+			else if (a->getId() == s && !second) second = a;
+			else break;
+		}
+		if (!first || !second) return false;
 		if (first->getSituation() != status::ONLINE || second->getSituation() != status::ONLINE) return false;
 		if (balance > first->getBalance()) return false;
 		first->setBalance(first->getBalance() - balance);
@@ -217,7 +226,7 @@ public:
 		return true;
 	}
 	account * craeteNewAccount(mode type, double balance) {
-		if (isOnline == code::OFFLINE) return nullptr;
+		if (isOnline == code::OFFLINE) throw personEX;
 		accounts->push_back(new account(type, balance));
 		return accounts->back();
 	}
