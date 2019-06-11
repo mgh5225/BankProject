@@ -2,7 +2,6 @@
 #define account_H
 #include<iostream>
 #include<vector>
-
 #include <utility>
 #include"date.h"
 using namespace std;
@@ -13,8 +12,8 @@ enum class mode {
 };
 enum class status {
 	ONLINE,
-	OFFLINE,
 	BLOCK,
+	EXPIRE,
 	NOTVERIFY
 };
 class accountException :public exception {
@@ -26,33 +25,34 @@ public:
 class account {
 private:
 	string createID() {
-		bool t = true;
 		string chr = "0123456789";
 		string temp;
 		srand(time(nullptr));
-		while (t) {
+		while (true) {
+			bool f = false;
 			temp.clear();
 			for (int i = 0; i < 15; i++) {
 				temp.push_back(chr[rand() % chr.size()]);
 			}
+			if (accounts.empty()) break;
 			for (auto a : accounts) {
 				if (temp == a->id) {
-					t = false;
+					f = true;
 					break;
 				}
 			}
-			if (accounts.empty()) break;
+			if (!f) break;
 		}
 		return temp;
 	}
 	static vector<account*> accounts;
 	string id;
-	date creationDate;
-	mode type;
 	double balance;
+	date creationDate;
 	date expireDate;
+	mode type;
 	status situation;
-	float getProfit() {
+	double getProfit() {
 		switch (type){
 		case mode::SHORTTERM:
 			return 0.1;
@@ -61,10 +61,16 @@ private:
 		case mode::GOODLOAN:
 			return 0;
 		default:
+			throw accountEX;
 			break;
 		}
 	}
 public:
+	account() {
+		balance = 0;
+		type = mode::SHORTTERM;
+		situation = status::NOTVERIFY;
+	}
 	account(mode type, double balance) {
 		if (balance < 0) throw accountEX;
 		this->type = type;
@@ -75,18 +81,47 @@ public:
 		this->expireDate= date::getNow()->setYear(creationDate.getYear()+5);
 		accounts.push_back(this);
 	}
-	void setBalance(int b) {
-		if (creationDate == expireDate) throw accountEX;
+	account(const account& old) {
+		id = old.id;
+		balance = old.balance;
+		creationDate = old.creationDate;
+		expireDate = old.expireDate;
+		type = old.type;
+		situation = old.situation;
+	}
+	account* operator=(const account& old) {
+		if (this != &old) {
+			id = old.id;
+			balance = old.balance;
+			creationDate = old.creationDate;
+			expireDate = old.expireDate;
+			type = old.type;
+			situation = old.situation;
+		}
+		return this;
+	}
+	void setBalance(double b) {
+		if (*date::getNow() == expireDate) {
+			situation = status::EXPIRE;
+			throw accountEX;
+		}
 		if (b > 0 && situation==status::ONLINE) balance = b;
 	}
 	void setType(mode type) {
-		if (creationDate == expireDate) throw accountEX;
+		if (*date::getNow() == expireDate) {
+			situation = status::EXPIRE;
+			throw accountEX;
+		}
 		int delta = date::deltaTime(creationDate, *date::getNow());
 		this->type = type;
 		balance += balance * getProfit() * delta;
 		creationDate = *date::getNow();
 	}
 	void setSituation(status situation) {
+		if (*date::getNow() == expireDate) {
+			situation = status::EXPIRE;
+			throw accountEX;
+		}
 		this->situation = situation;
 	}
 	string getId() {
@@ -112,4 +147,5 @@ public:
 		}
 	}
 };
+vector<account*> account::accounts;
 #endif

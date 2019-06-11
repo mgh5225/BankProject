@@ -11,6 +11,7 @@ enum class style {
 	YY_MM_DD_HH_MM_SS
 };
 class dateException:public exception {
+public:
 	const char* what() {
 		return "Date Exception";
 	}
@@ -23,8 +24,15 @@ class date {
 	int min;
 	int sec;
 public:
-	date(){}
-	date(int year, int month, int day, int hour = 0, int min = 0, int sec = 0) {
+	date() {
+		year = 0;
+		month = 0;
+		day = 0;
+		hour = 0;
+		min = 0;
+		sec = 0;
+	}
+	date(int year, int month, int day, int hour = 0, int min = 0, int sec = 0) :date() {
 		setYear(year);
 		setMonth(month);
 		setDay(day);
@@ -32,7 +40,7 @@ public:
 		setMin(min);
 		setSec(sec);
 	}
-	date(const date& old) {
+	date(const date& old) :date() {
 		setYear(old.year);
 		setMonth(old.month);
 		setDay(old.day);
@@ -40,30 +48,47 @@ public:
 		setMin(old.min);
 		setSec(old.sec);
 	}
+	date& operator=(const date& obj){
+		if (this != &obj) {
+			setYear(obj.year);
+			setMonth(obj.month);
+			setDay(obj.day);
+			setHour(obj.hour);
+			setMin(obj.min);
+			setSec(obj.sec);
+		}
+		return *this;
+	}
 	date& setYear(int y) {
-		if (y > 2000) year = y;
+		if (y > 1900) year = y;
 		else throw dateEX;
+		return *this;
 	}
 	date& setMonth(int m) {
 		if (m > 0 && m < 13) month = m;
 		else throw dateEX;
+		return *this;
 	}
 	date& setDay(int d) {
 		int mon[] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
 		if (d > 0 && d <= mon[month - 1]) day = d;
 		else throw dateEX;
+		return *this;
 	}
 	date& setHour(int h) {
 		if (h >= 0 && h < 24) hour = h;
 		else throw dateEX;
+		return *this;
 	}
 	date& setMin(int m) {
 		if (m >= 0 && m < 60) min = m;
 		else throw dateEX;
+		return *this;
 	}
 	date& setSec(int s) {
 		if (s >= 0 && s < 60) sec = s;
 		else throw dateEX;
+		return *this;
 	}
 	int getYear() {
 		return year;
@@ -105,7 +130,7 @@ public:
 	static date* getNow() {
 		std::time_t t = std::time(0);
 		std::tm* now = std::localtime(&t);
-		return new date(now->tm_year, now->tm_mon, now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
+		return new date(now->tm_year+1900, now->tm_mon, now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
 	}
 	static int deltaTime(date first, date second) {
 		tm fTime;
@@ -126,4 +151,3 @@ public:
 	}
 };
 #endif
-
