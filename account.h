@@ -24,7 +24,7 @@ public:
 }accountEX;
 class account {
 private:
-	string createID() {
+	static string createID() {
 		string chr = "0123456789";
 		string temp;
 		srand(time(nullptr));
@@ -71,6 +71,8 @@ public:
 		type = mode::SHORTTERM;
 		situation = status::NOTVERIFY;
 	}
+	~account() {
+	}
 	account(mode type, double balance) {
 		if (balance < 0) throw accountEX;
 		this->type = type;
@@ -89,23 +91,15 @@ public:
 		type = old.type;
 		situation = old.situation;
 	}
-	account* operator=(const account& old) {
-		if (this != &old) {
-			id = old.id;
-			balance = old.balance;
-			creationDate = old.creationDate;
-			expireDate = old.expireDate;
-			type = old.type;
-			situation = old.situation;
-		}
-		return this;
+	account& operator=(const account& old) {
+		throw accountEX;
 	}
 	void setBalance(double b) {
 		if (*date::getNow() == expireDate) {
 			situation = status::EXPIRE;
 			throw accountEX;
 		}
-		if (b > 0 && situation==status::ONLINE) balance = b;
+		if (b >= 0 && situation==status::ONLINE) balance = b;
 	}
 	void setType(mode type) {
 		if (*date::getNow() == expireDate) {
@@ -114,7 +108,7 @@ public:
 		}
 		int delta = date::deltaTime(creationDate, *date::getNow());
 		this->type = type;
-		setBalance( balance * getProfit() * delta );
+		setBalance( balance + balance * getProfit() * delta );
 		creationDate = *date::getNow();
 	}
 	void setSituation(status situation) {
@@ -143,7 +137,7 @@ public:
 		if (creationDate == expireDate) throw accountEX;
 		int delta = date::deltaTime(creationDate, *date::getNow());
 		if (delta > 0) {
-			setBalance( balance * getProfit() * delta);
+			setBalance( balance + balance * getProfit() * delta);
 		}
 	}
 };

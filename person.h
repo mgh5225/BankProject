@@ -25,7 +25,7 @@ public:
 }personEX;
 class person {
 private:
-	string createID() {
+	static string createID() {
 		string chr = "0123456789QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm";
 		string temp;
 		srand(time(nullptr));
@@ -64,14 +64,19 @@ protected:
 	vector<pair<date,date>>* timeOfADs;
 	virtual void addProfit() {
 		for (auto a : *accounts) {
-			a->addProfit();
+			try {
+				a->addProfit();
+			}
+			catch (accountException ex) {
+				cout << ex.what() << endl;
+			}
 		}
 	}
 public:
 	person() {
 		isOnline = code::OFFLINE;
-		accounts = nullptr;
-		timeOfADs = nullptr;
+		accounts = new vector<account*>;
+		timeOfADs = new vector<pair<date, date>>;
 	}
 	person(string name, date birthDate, string username, string password) {
 		if (found(username)) throw personEX;
@@ -85,10 +90,25 @@ public:
 		this->accounts = new vector<account*>;
 		persons.push_back(this);
 	}
+	person(const person& old) {
+		id = old.id;
+		name = old.name;
+		birthDate = old.birthDate;
+		isOnline = old.isOnline;
+		username = old.username;
+		password = old.password;
+		accounts = new vector<account*>(*old.accounts);
+		timeOfADs = new vector<pair<date, date>>(*old.timeOfADs);
+	}
+	person& operator=(const person& old) {
+		throw personEX;
+	}
 	virtual ~person() {
 		for (auto a : *accounts) {
 			delete a;
 		}
+		delete accounts;
+		delete timeOfADs;
 	}
 	static pair<loginCode, person*> login(string username, string password) {
 		person* p = found(username);
@@ -105,64 +125,6 @@ public:
 	void logout() {
 		if(isOnline==code::ONLINE)
 			setIsOnline(code::OFFLINE);
-	}
-	static void readFromFile() {
-		ifstream stream("persons.p", ios_base::binary);
-		if (stream.is_open()) {
-			while (true) {
-				string id;
-				stream >> id;
-				if (stream.eof())break;
-				ifstream stream2(id, ios_base::binary);
-				if (stream2.is_open()) {
-					person* p = new person;
-					streamsize size;
-					stream >> size;
-					stream2.read((char*)p,size);
-					p->timeOfADs = new vector<pair<date, date>>;
-					p->accounts = new vector<account*>;
-					persons.push_back(new person(*p));
-					size_t l;
-					stream >> l;
-					for (int i = 0; i < l; i++) {
-						pair<date, date> time;
-						stream2.read((char*)& time, sizeof(pair<date, date>));
-						p->timeOfADs->push_back(time);
-					}
-					stream >> l;
-					for (int i = 0; i < l; i++) {
-						account* acc = new account;
-						stream2.read((char*)acc, sizeof(account));
-						p->accounts->push_back(new account(*acc));
-					}
-				}
-				stream2.close();
-			}
-		}
-		stream.close();
-	}
-	static void saveToFile() {
-		ofstream stream("persons.p", ios_base::binary);
-		if (stream.is_open()) {
-			for (auto p : persons) {
-				stream << p->id << endl;
-				stream << sizeof(*p) << endl;
-				stream << p->timeOfADs->size() << endl;
-				stream << p->accounts->size() << endl;
-				ofstream stream2(p->id, ios_base::binary);
-				if (stream2.is_open()) {
-					stream2.write((char*)p, sizeof(*p));
-					for (auto t : *(p->timeOfADs)) {
-						stream2.write((char*)& t, sizeof(pair<date, date>));
-					}
-					for (auto a : *(p->accounts)) {
-						stream2.write((char*)a, sizeof(account));
-					}
-				}
-				stream2.close();
-			}
-		}
-		stream.close();
 	}
 	string getId() {
 		return id;

@@ -11,7 +11,7 @@ public:
 		}
 		return users;
 	}
-	vector<pair<person*, account*>> getAccounts(){
+	vector<pair<person*, account*>> getAllAccounts(){
 		vector<pair<person*, account*>> list;
 		for (auto u : getUsers()) {
 			for (auto a : u->getAccounts()) {
