@@ -109,6 +109,13 @@ public:
 		}
 		delete accounts;
 		delete timeOfADs;
+		for (int i = 0; i < persons.size();i++) {
+			if (this == persons[i]) {
+				persons.erase(persons.begin() + i);
+				break;
+			}
+		}
+		remove(id.c_str());
 	}
 	static pair<loginCode, person*> login(string username, string password) {
 		person* p = found(username);
@@ -141,6 +148,9 @@ public:
 	vector<pair<date, date>> getTimeOfADs() {
 		return *timeOfADs;
 	}
+	const vector<account*> getAccounts() {
+		return *accounts;
+	}
 	void setName(string name) {
 		this->name = name;
 	}
@@ -168,9 +178,6 @@ public:
 	void setPassword(string password) {
 		this->password = password;
 	}
-	const vector<account*> getAccounts() {
-		return *accounts;
-	}
 	bool moveMoney(string f, string s, double balance) {
 		if (isOnline == code::OFFLINE)return false;
 		if (balance < 0) return false;
@@ -192,7 +199,15 @@ public:
 		accounts->push_back(new account(type, balance));
 		return accounts->back();
 	}
-
+	void deleteBankAccount(account* a) {
+		for (int i = 0; i < accounts->size(); i++) {
+			if (a == (*accounts)[i]) {
+				accounts->erase(accounts->begin() + i);
+				delete a;
+				break;
+			}
+		}
+	}
 };
 vector<person*> person::persons;
 #endif

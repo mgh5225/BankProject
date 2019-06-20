@@ -70,8 +70,15 @@ public:
 		balance = 0;
 		type = mode::SHORTTERM;
 		situation = status::NOTVERIFY;
+		accounts.push_back(this);
 	}
 	~account() {
+		for (int i = 0; i < accounts.size(); i++) {
+			if (this == accounts[i]) {
+				accounts.erase(accounts.begin() + i);
+				break;
+			}
+		}
 	}
 	account(mode type, double balance) {
 		if (balance < 0) throw accountEX;
