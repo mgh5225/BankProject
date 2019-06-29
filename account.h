@@ -17,9 +17,14 @@ enum class status {
 	NOTVERIFY
 };
 class accountException :public exception {
+	string data;
 public:
 	const char* what() {
-		return "Account Exception";
+		return data.c_str();
+	}
+	accountException& operator()(string _data) {
+		data = _data;
+		return *this;
 	}
 }accountEX;
 class account {
@@ -61,7 +66,7 @@ private:
 		case mode::GOODLOAN:
 			return 0;
 		default:
-			throw accountEX;
+			throw accountEX("Type is not define");
 			break;
 		}
 	}
@@ -80,7 +85,7 @@ public:
 		}
 	}
 	account(mode type, double balance) {
-		if (balance < 0) throw accountEX;
+		if (balance < 0) throw accountEX("Balance < 0");
 		this->type = type;
 		this->balance = balance;
 		this->id = createID();
@@ -99,21 +104,21 @@ public:
 		accounts.push_back(this);
 	}
 	account& operator=(const account& old) {
-		throw accountEX;
+		throw accountEX("Bad signatur");
 	}
 	void setBalance(double b) {
-		if (situation == status::EXPIRE) throw accountEX;
+		if (situation == status::EXPIRE) throw accountEX("Bank account has been expired");
 		if (b >= 0 && situation==status::ONLINE) balance = b;
 	}
 	void setType(mode type) {
-		if (situation == status::EXPIRE) throw accountEX;
+		if (situation == status::EXPIRE) throw accountEX("Bank account has been expired");
 		int delta = date::deltaTime(*date::getNow(), creationDate);
 		this->type = type;
 		setBalance( balance + balance * getProfit() * delta );
 		creationDate = *date::getNow();
 	}
 	void setSituation(status situation) {
-		if (this->situation == status::EXPIRE) throw accountEX;
+		if (this->situation == status::EXPIRE) throw accountEX("Bank account has been expired");
 		this->situation = situation;
 	}
 	string getId() {
@@ -132,7 +137,7 @@ public:
 		return pair<date, date>(creationDate, expireDate);
 	}
 	void addProfit() {
-		if (situation == status::EXPIRE) throw accountEX;
+		if (situation == status::EXPIRE) throw accountEX("Bank account has been expired");
 		int delta = date::deltaTime(*date::getNow(),creationDate);
 		if (delta > 0) {
 			setBalance( balance + balance * getProfit() * delta);

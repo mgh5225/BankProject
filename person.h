@@ -19,9 +19,14 @@ enum class loginCode {
 	WRONGUSER
 };
 class personException:public exception {
+	string data;
 public:
 	const char* what() {
-		return "Person Exception";
+		return data.c_str();
+	}
+	personException& operator()(string _data) {
+		data = _data;
+		return *this;
 	}
 }personEX;
 class person {
@@ -80,7 +85,7 @@ public:
 		timeOfADs = new vector<pair<date, date>>;
 	}
 	person(string name, date birthDate, string username, string password) {
-		if (found(username)) throw personEX;
+		if (found(username)) throw personEX("Username exist");
 		this->id = createID();
 		this->name = name;
 		this->birthDate = birthDate;
@@ -122,7 +127,7 @@ public:
 		person* p = found(username);
 		if (!p) return pair<loginCode, person*>(loginCode::WRONGUSER,nullptr);
 		if(p->password!=password) return pair<loginCode, person*>(loginCode::WRONGPASS, nullptr);
-		if (p->isOnline == code::BLOCK) throw personEX;
+		if (p->isOnline == code::BLOCK) throw personEX("Your account has been blocked");
 		if (p->isOnline == code::ONLINE) p->logout();
 		if (!p->timeOfADs->empty() && p->timeOfADs->back().second != *date::getNow()) {
 			p->addProfit();
@@ -154,11 +159,11 @@ public:
 		return *accounts;
 	}
 	void setName(string name) {
-		if (isOnline == code::BLOCK) throw personEX;
+		if (isOnline == code::BLOCK) throw personEX("Your account has been blocked");
 		this->name = name;
 	}
 	void setBirthDate(date birthDate) {
-		if (isOnline == code::BLOCK) throw personEX;
+		if (isOnline == code::BLOCK) throw personEX("Your account has been blocked");
 		this->birthDate = birthDate;
 	}
 	void setIsOnline(code isOnline) {
@@ -176,16 +181,16 @@ public:
 		}
 	}
 	void setUsername(string username) {
-		if (isOnline == code::BLOCK) throw personEX;
-		if (found(username))throw personEX;
+		if (isOnline == code::BLOCK) throw personEX("Your account has been blocked");
+		if (found(username))throw personEX("Username exist");
 		this->username = username;
 	}
 	void setPassword(string password) {
-		if (isOnline == code::BLOCK) throw personEX;
+		if (isOnline == code::BLOCK) throw personEX("Your account has been blocked");
 		this->password = password;
 	}
 	bool moveMoney(string f, string s, double balance) {
-		if (isOnline == code::BLOCK) throw personEX;
+		if (isOnline == code::BLOCK) throw personEX("Your account has been blocked");
 		if (isOnline == code::OFFLINE)return false;
 		if (balance < 0) return false;
 		account * first=nullptr,* second=nullptr;
@@ -202,12 +207,12 @@ public:
 		return true;
 	}
 	account * craeteNewAccount(mode type, double balance) {
-		if (isOnline == code::BLOCK) throw personEX;
+		if (isOnline == code::BLOCK) throw personEX("Your account has been blocked");
 		accounts->push_back(new account(type, balance));
 		return accounts->back();
 	}
 	void deleteBankAccount(account* a) {
-		if (isOnline == code::BLOCK) throw personEX;
+		if (isOnline == code::BLOCK) throw personEX("Your account has been blocked");
 		for (int i = 0; i < accounts->size(); i++) {
 			if (a == (*accounts)[i]) {
 				accounts->erase(accounts->begin() + i);

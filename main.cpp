@@ -105,6 +105,82 @@ void loginPanel() {
 		}
 	}
 }
+void userLogin(){
+	try {
+		cout << endl;
+		cout << "username: ";
+		string username;
+		cin >> ws >> username;
+		cout << "password: ";
+		string password;
+		cin >> ws >> password;
+		auto log = person::login(username, password);
+		switch (log.first)
+		{
+		case::loginCode::WRONGUSER:
+			cout << "username does not exist" << endl;
+			break;
+		case loginCode::WRONGPASS:
+			cout << "Password is wrong" << endl;
+			break;
+		case loginCode::SUCCESS:
+			if (!dynamic_cast<admin*>(log.second)) {
+				cout << "Login successfully" << endl;
+				userPanel(log.second);
+			}
+			else {
+				cout << "username dose not exist" << endl;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	catch (personException ex) {
+		cout << ex.what() << endl;
+	}
+	catch (dateException ex) {
+		cout << ex.what() << endl;
+	}
+}
+void adminLogin(){
+	try {
+		cout << endl;
+		cout << "username: ";
+		string username;
+		cin >> ws >> username;
+		cout << "password: ";
+		string password;
+		cin >> ws >> password;
+		auto log = person::login(username, password);
+		switch (log.first)
+		{
+		case::loginCode::WRONGUSER:
+			cout << "username does not exist" << endl;
+			break;
+		case loginCode::WRONGPASS:
+			cout << "Password is wrong" << endl;
+			break;
+		case loginCode::SUCCESS:
+			if (dynamic_cast<admin*>(log.second)) {
+				cout << "Login successfully" << endl;
+				adminPanel(dynamic_cast<admin*>(log.second));
+			}
+			else {
+				cout << "username dose not exist" << endl;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	catch (personException ex) {
+		cout << ex.what() << endl;
+	}
+	catch (dateException ex) {
+		cout << ex.what() << endl;
+	}
+}
 void signupPanel(){
 	cout << endl;
 	while (true) {
@@ -127,66 +203,6 @@ void signupPanel(){
 		default:
 			break;
 		}
-	}
-}
-void userLogin(){
-	cout << endl;
-	cout << "username: ";
-	string username;
-	cin >> ws >> username;
-	cout << "password: ";
-	string password;
-	cin >> ws >> password;
-	auto log = person::login(username, password);
-	switch (log.first)
-	{
-	case::loginCode::WRONGUSER:
-		cout << "username does not exist" << endl;
-		break;
-	case loginCode::WRONGPASS:
-		cout << "Password is wrong" << endl;
-		break;
-	case loginCode::SUCCESS:
-		if (!dynamic_cast<admin*>(log.second)) {
-			cout << "Login successfully" << endl;
-			userPanel(log.second);
-		}
-		else {
-			cout << "username dose not exist" << endl;
-		}
-		break;
-	default:
-		break;
-	}
-}
-void adminLogin(){
-	cout << endl;
-	cout << "username: ";
-	string username;
-	cin >> ws >> username;
-	cout << "password: ";
-	string password;
-	cin >> ws >> password;
-	auto log = person::login(username, password);
-	switch (log.first)
-	{
-	case::loginCode::WRONGUSER:
-		cout << "username does not exist" << endl;
-		break;
-	case loginCode::WRONGPASS:
-		cout << "Password is wrong" << endl;
-		break;
-	case loginCode::SUCCESS:
-		if (dynamic_cast<admin*>(log.second)) {
-			cout << "Login successfully" << endl;
-			adminPanel(dynamic_cast<admin*>(log.second));
-		}
-		else {
-			cout << "username dose not exist" << endl;
-		}
-		break;
-	default:
-		break;
 	}
 }
 void userSignup(){
@@ -838,153 +854,188 @@ void createAccount(person* p) {
 		catch (accountException ex) {
 			cout << ex.what() << endl;
 		}
+		catch (dateException ex) {
+			cout << ex.what() << endl;
+		}
 	}
 }
 void accountSetting(person* p) {
 	while (true) {
-		cout << "[1] Change name" << endl;
-		cout << "[2] Change birthdate" << endl;
-		cout << "[3] Change password" << endl;
-		cout << "[4] Back" << endl;
-		cout << "[#] ";
-		int n;
-		cin >> n;
-		if (n == 1) {
-			cout << "Your name: " << p->getName() << endl;
-			cout << "name(firstName lastName): ";
-			string name;
-			getline(cin >> ws, name);
-			p->setName(name);
-		}
-		else if (n == 2) {
-			cout << "Your birthdate: ";
-			p->getBirthDate().print(style::YY_MM_DD);
-			date birthDate;
-			while (true) {
-				try {
-					cout << "birthDate(YYYY MM DD): ";
-					int year, month, day;
-					cin >> ws >> year >> month >> day;
-					birthDate = date(year, month, day);
-					break;
-				}
-				catch (dateException ex) {
-					cout << ex.what() << endl;
-				}
+		try {
+			cout << "[1] Change name" << endl;
+			cout << "[2] Change birthdate" << endl;
+			cout << "[3] Change password" << endl;
+			cout << "[4] Back" << endl;
+			cout << "[#] ";
+			int n;
+			cin >> n;
+			if (n == 1) {
+				cout << "Your name: " << p->getName() << endl;
+				cout << "name(firstName lastName): ";
+				string name;
+				getline(cin >> ws, name);
+				p->setName(name);
 			}
-			p->setBirthDate(birthDate);
+			else if (n == 2) {
+				cout << "Your birthdate: ";
+				p->getBirthDate().print(style::YY_MM_DD);
+				date birthDate;
+				while (true) {
+					try {
+						cout << "birthDate(YYYY MM DD): ";
+						int year, month, day;
+						cin >> ws >> year >> month >> day;
+						birthDate = date(year, month, day);
+						break;
+					}
+					catch (dateException ex) {
+						cout << ex.what() << endl;
+					}
+				}
+				p->setBirthDate(birthDate);
+			}
+			else if (n == 3) {
+				cout << "password: ";
+				string password;
+				cin >> ws >> password;
+				p->setPassword(password);
+			}
+			else if (n == 4) {
+				break;
+			}
 		}
-		else if (n == 3) {
-			cout << "password: ";
-			string password;
-			cin >> ws >> password;
-			p->setPassword(password);
+		catch (personException ex) {
+			cout << ex.what() << endl;
 		}
-		else if (n == 4) {
-			break;
+		catch (accountException ex) {
+			cout << ex.what() << endl;
+		}
+		catch (dateException ex) {
+			cout << ex.what() << endl;
 		}
 	}
 }
 void transferMoney(person* p) {
-	string first, second;
-	cout << "First account ID: ";
-	cin >> first;
-	cout << "Second account ID: ";
-	cin >> second;
-	double balance;
-	cout << "Balance: ";
-	cin >> balance;
-	bool ans = p->moveMoney(first, second, balance);
-	if (ans) cout << "Money transfer success" << endl;
-	else cout << "Money transfer faild" << endl;
+	try {
+		string first, second;
+		cout << "First account ID: ";
+		cin >> first;
+		cout << "Second account ID: ";
+		cin >> second;
+		double balance;
+		cout << "Balance: ";
+		cin >> balance;
+		bool ans = p->moveMoney(first, second, balance);
+		if (ans) cout << "Money transfer success" << endl;
+		else cout << "Money transfer faild" << endl;
+	}
+	catch (personException ex) {
+		cout << ex.what() << endl;
+	}
+	catch (accountException ex) {
+		cout << ex.what() << endl;
+	}
+	catch (dateException ex) {
+		cout << ex.what() << endl;
+	}
 }
 void bankAccountSetting(person* p,account* a) {
 	while (true) {
-		cout << "[1] Change type" << endl;
-		cout << "[2] Change Status" << endl;
-		cout << "[3] Delete account" << endl;
-		cout << "[4] Back" << endl;
-		cout << "[#] ";
-		int n;
-		cin >> n;
-		if (n == 1) {
-			cout << "Type: ";
-			switch (a->getType())
-			{
-			case mode::SHORTTERM:
-				cout << "Short term" << endl;
-				break;
-			case mode::LONGTERM:
-				cout << "Long term" << endl;
-				break;
-			case mode::GOODLOAN:
-				cout << "Good loan" << endl;
-				break;
-			default:
-				cout << "Undefined" << endl;
-				break;
-			}
-			cout << "New mode: " << endl;
-			cout << "[1] Short term" << endl;
-			cout << "[2] Long term" << endl;
-			cout << "[3] Good loan" << endl;
+		try {
+			cout << "[1] Change type" << endl;
+			cout << "[2] Change Status" << endl;
+			cout << "[3] Delete account" << endl;
+			cout << "[4] Back" << endl;
+			cout << "[#] ";
 			int n;
-			do {
-				cout << "[#] ";
-				cin >> n;
-			} while (n <= 0 || n > 3);
-			mode type = mode::SHORTTERM;
-			switch (n)
-			{
-			case 1: type = mode::SHORTTERM; break;
-			case 2: type= mode::LONGTERM; break;
-			case 3: type = mode::GOODLOAN; break;
+			cin >> n;
+			if (n == 1) {
+				cout << "Type: ";
+				switch (a->getType())
+				{
+				case mode::SHORTTERM:
+					cout << "Short term" << endl;
+					break;
+				case mode::LONGTERM:
+					cout << "Long term" << endl;
+					break;
+				case mode::GOODLOAN:
+					cout << "Good loan" << endl;
+					break;
+				default:
+					cout << "Undefined" << endl;
+					break;
+				}
+				cout << "New mode: " << endl;
+				cout << "[1] Short term" << endl;
+				cout << "[2] Long term" << endl;
+				cout << "[3] Good loan" << endl;
+				int n;
+				do {
+					cout << "[#] ";
+					cin >> n;
+				} while (n <= 0 || n > 3);
+				mode type = mode::SHORTTERM;
+				switch (n)
+				{
+				case 1: type = mode::SHORTTERM; break;
+				case 2: type = mode::LONGTERM; break;
+				case 3: type = mode::GOODLOAN; break;
+				}
+				a->setType(type);
 			}
-			a->setType(type);
-		}
-		else if (n == 2) {
-			cout << "Status: ";
-			switch (a->getSituation())
-			{
-			case status::ONLINE:
-				cout << "Online" << endl;
-				break;
-			case status::BLOCK:
-				cout << "Block" << endl;
-				break;
-			case status::EXPIRE:
-				cout << "Expire" << endl;
-				break;
-			case status::NOTVERIFY:
-				cout << "Not verify" << endl;
-				break;
-			default:
-				cout << "Undefined" << endl;
+			else if (n == 2) {
+				cout << "Status: ";
+				switch (a->getSituation())
+				{
+				case status::ONLINE:
+					cout << "Online" << endl;
+					break;
+				case status::BLOCK:
+					cout << "Block" << endl;
+					break;
+				case status::EXPIRE:
+					cout << "Expire" << endl;
+					break;
+				case status::NOTVERIFY:
+					cout << "Not verify" << endl;
+					break;
+				default:
+					cout << "Undefined" << endl;
+					break;
+				}
+				cout << "new Status: " << endl;
+				cout << "[1] Online" << endl;
+				cout << "[2] Block" << endl;
+				int n;
+				do {
+					cout << "[#] ";
+					cin >> n;
+				} while (n <= 0 || n > 3);
+				status situation = status::NOTVERIFY;
+				switch (n)
+				{
+				case 1: situation = status::ONLINE; break;
+				case 2: situation = status::BLOCK; break;
+				}
+				a->setSituation(situation);
+			}
+			else if (n == 3) {
+				p->deleteBankAccount(a);
 				break;
 			}
-			cout << "new Status: " << endl;
-			cout << "[1] Online" << endl;
-			cout << "[2] Block" << endl;
-			int n;
-			do {
-				cout << "[#] ";
-				cin >> n;
-			} while (n <= 0 || n > 3);
-			status situation = status::NOTVERIFY;
-			switch (n)
-			{
-			case 1: situation = status::ONLINE; break;
-			case 2: situation = status::BLOCK; break;
+			else if (n == 4) {
+				break;
 			}
-			a->setSituation(situation);
 		}
-		else if (n == 3) {
-			p->deleteBankAccount(a);
-			break;
+		catch (personException ex) {
+			cout << ex.what() << endl;
 		}
-		else if (n == 4) {
-			break;
+		catch (accountException ex) {
+			cout << ex.what() << endl;
+		}
+		catch (dateException ex) {
+			cout << ex.what() << endl;
 		}
 	}
 }
-//handle exceptions

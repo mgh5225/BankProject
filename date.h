@@ -11,9 +11,14 @@ enum class style {
 	YY_MM_DD_HH_MM_SS
 };
 class dateException:public exception {
+	string data;
 public:
 	const char* what() {
-		return "Date Exception";
+		return data.c_str();
+	}
+	dateException& operator()(string _data) {
+		data = _data;
+		return *this;
 	}
 }dateEX;
 class date {
@@ -61,33 +66,33 @@ public:
 	}
 	date& setYear(int y) {
 		if (y > 1900) year = y;
-		else throw dateEX;
+		else throw dateEX("Bad year");
 		return *this;
 	}
 	date& setMonth(int m) {
 		if (m > 0 && m < 13) month = m;
-		else throw dateEX;
+		else throw dateEX("Bad month");
 		return *this;
 	}
 	date& setDay(int d) {
 		int mon[] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
 		if (d > 0 && d <= mon[month - 1]) day = d;
-		else throw dateEX;
+		else throw dateEX("Bad day");
 		return *this;
 	}
 	date& setHour(int h) {
 		if (h >= 0 && h < 24) hour = h;
-		else throw dateEX;
+		else throw dateEX("Bad hour");
 		return *this;
 	}
 	date& setMin(int m) {
 		if (m >= 0 && m < 60) min = m;
-		else throw dateEX;
+		else throw dateEX("Bad min");
 		return *this;
 	}
 	date& setSec(int s) {
 		if (s >= 0 && s < 60) sec = s;
-		else throw dateEX;
+		else throw dateEX("Bad sec");
 		return *this;
 	}
 	int getYear() {
