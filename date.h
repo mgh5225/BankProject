@@ -141,13 +141,16 @@ public:
 		sTime.tm_year = second.year-1900;
 		sTime.tm_mon = second.month-1;
 		sTime.tm_mday = second.day;
-		return (mktime(&sTime)-mktime(&fTime)) / 86400;
+		return (mktime(&fTime)-mktime(&sTime)) / 86400;
 	}
 	bool operator==(date& obj) {
 		return year == obj.year && month == obj.month && day == obj.day;
 	}
 	bool operator!=(date& obj) {
 		return !(year == obj.year && month == obj.month && day == obj.day);
+	}
+	bool operator>=(date& obj) {
+		return deltaTime(*this,obj) >= 0;
 	}
 };
 #endif

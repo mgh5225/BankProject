@@ -1,7 +1,19 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
 #include<string>
+#include<thread>
 #include "admin.h"
+bool isExitTime = false;
+void checkExpire() {
+	while (!isExitTime) {
+		for (int i = 0; i < account::accounts.size();i++) {
+			if (account::accounts[i]->getSituation() == status::EXPIRE) continue;
+			if (*date::getNow() >= account::accounts[i]->expireDate) {
+				account::accounts[i]->setSituation(status::EXPIRE);
+			}
+		}
+	}
+}
 void loginPanel();
 void signupPanel();
 void userLogin();
@@ -14,9 +26,28 @@ void transferMoney(person* p);
 void bankAccountSetting(person* p,account* a);
 void userPanel(person* u);
 void adminPanel(admin* a);
+double bank_balance = 0;
+date bank_date = *date::getNow();
+bool bank_expire_con(account* acc) {
+	return acc->getSituation() == status::EXPIRE;
+}
+bool bank_block_con(account* acc) {
+	return acc->getSituation() == status::BLOCK;
+}
+bool bank_balance_con(account* acc) {
+	return acc->getBalance() > bank_balance;
+}
+bool bank_date_con(account* acc) {
+	return acc->getCEDate().first >= bank_date;
+}
+bool bank_all_con(account* acc) {
+	return true;
+}
 int main(){
+	vector<thread> threads;
 	try {
 		admin::readFromFile();
+		threads.push_back(thread(checkExpire));
 		while (true) {
 			cout << endl;
 			cout << "[1] Login" << endl;
@@ -35,6 +66,8 @@ int main(){
 				break;
 			case 3:
 				admin::saveToFile();
+				isExitTime = true;
+				for (auto& t : threads) { t.join(); }
 				return 0;
 			default:
 				break;
@@ -43,6 +76,8 @@ int main(){
 	}
 	catch (...) {
 		cout << "Get Error!" << endl;
+		isExitTime = true;
+		for (auto& t : threads) { t.join(); }
 		return 0;
 	}
 }
@@ -103,25 +138,25 @@ void userLogin(){
 	string password;
 	cin >> ws >> password;
 	auto log = person::login(username, password);
-	if (!dynamic_cast<admin*>(log.second)) {
-		switch (log.first)
-		{
-		case::loginCode::WRONGUSER:
-			cout << "username does not exist" << endl;
-			break;
-		case loginCode::WRONGPASS:
-			cout << "Password is wrong" << endl;
-			break;
-		case loginCode::SUCCESS:
+	switch (log.first)
+	{
+	case::loginCode::WRONGUSER:
+		cout << "username does not exist" << endl;
+		break;
+	case loginCode::WRONGPASS:
+		cout << "Password is wrong" << endl;
+		break;
+	case loginCode::SUCCESS:
+		if (!dynamic_cast<admin*>(log.second)) {
 			cout << "Login successfully" << endl;
 			userPanel(log.second);
-			break;
-		default:
-			break;
 		}
-	}
-	else {
-		cout << "username dose not exist" << endl;
+		else {
+			cout << "username dose not exist" << endl;
+		}
+		break;
+	default:
+		break;
 	}
 }
 void adminLogin(){
@@ -301,7 +336,7 @@ void userPanel(person* u){
 				continue;
 			}
 			m--;
-			if (accounts[m]->getSituation() == status::NOTVERIFY || accounts[m]->getSituation() == status::EXPIRE) {
+			if (accounts[m]->getSituation() != status::ONLINE) {
 				cout << "You cant change this account" << endl;
 				continue;
 			}
@@ -457,7 +492,16 @@ void adminPanel(admin* u){
 							cout << "Name: " << users[i]->getName() << endl;
 							cout << "Birthdate: ";
 							users[i]->getBirthDate().print(style::YY_MM_DD);
-							cout << "Status: " << (users[i]->getIsOnline() == code::ONLINE ? "Online" : "Offline") << endl;
+							cout << "Status: ";
+							switch (users[i]->getIsOnline())
+							{
+							case code::ONLINE: cout << "Online" << endl; break;
+							case code::OFFLINE: cout << "Offline" << endl; break;
+							case code::BLOCK: cout << "Block" << endl; break;
+							default:
+								cout << "Undefined" << endl;
+								break;
+							}
 							cout << "------------------------------------------------------------" << endl;
 						}
 					}
@@ -467,7 +511,7 @@ void adminPanel(admin* u){
 					do {
 						cout << "[#] ";
 						cin >> n;
-					} while (n < 0 || n > users.size()+1);
+					} while (n < 0 || n > users.size() + 1);
 					if (n == 0) {
 						userSignup();
 						continue;
@@ -479,9 +523,10 @@ void adminPanel(admin* u){
 					while (true) {
 						cout << "[1] Show enter and exit time" << endl;
 						cout << "[2] Show bank accounts" << endl;
-						cout << "[3] Edit profile" << endl;
-						cout << "[4] Delete profile" << endl;
-						cout << "[5] Back" << endl;
+						cout << "[3] Change status of user" << endl;
+						cout << "[4] Edit profile" << endl;
+						cout << "[5] Delete profile" << endl;
+						cout << "[6] Back" << endl;
 						cout << "[#] ";
 						int m;
 						cin >> m;
@@ -552,7 +597,7 @@ void adminPanel(admin* u){
 								}
 							}
 							cout << "[0] Create new account" << endl;
-							cout << "[" << accounts.size()+1  << "] Back" << endl;
+							cout << "[" << accounts.size() + 1 << "] Back" << endl;
 							int p;
 							do {
 								cout << "[#] ";
@@ -560,89 +605,135 @@ void adminPanel(admin* u){
 							} while (p < 0 || p > accounts.size() + 1);
 							if (p == 0) {
 								createAccount(users[n]);
-								break;
+								continue;
 							}
 							else if (p == accounts.size() + 1) {
-								break;
+								continue;
 							}
 							p--;
-							bankAccountSetting(users[n],accounts[p]);
+							bankAccountSetting(users[n], accounts[p]);
 						}
 						else if (m == 3) {
-							accountSetting(users[n]);
+							//exception here
+							cout << "[1] Block this user" << endl;
+							cout << "[2] Unblock this user" << endl;
+							int p;
+							do {
+								cout << "[#] ";
+								cin >> p;
+							} while (p < 1 || p > 2);
+							if (p == 1) {
+								users[n]->setIsOnline(code::BLOCK);
+							}
+							else if (p == 2) {
+								users[n]->setIsOnline(code::OFFLINE);
+							}
 						}
 						else if (m == 4) {
+							accountSetting(users[n]);
+						}
+						else if (m == 5) {
 							delete users[n];
 							break;
 						}
-						else if (m == 5) {
+						else if (m == 6) {
 							break;
 						}
 					}
 				}
 				else if (n == 2) {
-				auto accounts = u->getAllAccounts();
-				if (accounts.empty()) {
-					cout << "We dont have any accounts" << endl;
-				}
-				else {
-					cout << "------------------------------------------------------------" << endl;
-					for (int i = 0; i < accounts.size(); i++) {
-						cout << "[" << i + 1 << "] " << accounts[i].second->getId() << endl;
-						cout << "Type: ";
-						switch (accounts[i].second->getType())
-						{
-						case mode::SHORTTERM:
-							cout << "Short term" << endl;
-							break;
-						case mode::LONGTERM:
-							cout << "Long term" << endl;
-							break;
-						case mode::GOODLOAN:
-							cout << "Good loan" << endl;
-							break;
-						default:
-							cout << "Undefined" << endl;
-							break;
-						}
-						cout << "Status: ";
-						switch (accounts[i].second->getSituation())
-						{
-						case status::ONLINE:
-							cout << "Online" << endl;
-							break;
-						case status::BLOCK:
-							cout << "Block" << endl;
-							break;
-						case status::EXPIRE:
-							cout << "Expire" << endl;
-							break;
-						case status::NOTVERIFY:
-							cout << "Not verify" << endl;
-							break;
-						default:
-							cout << "Undefined" << endl;
-							break;
-						}
-						cout << "Balance: " << accounts[i].second->getBalance() << endl;
-						cout << "Creation date: ";
-						accounts[i].second->getCEDate().first.print(style::YYYY_MM_DD);
-						cout << "Expire date: ";
-						accounts[i].second->getCEDate().second.print(style::YYYY_MM_DD);
-						cout << "------------------------------------------------------------" << endl;
+					cout << "[1] All accounts" << endl;
+					cout << "[2] balance > X" << endl;
+					cout << "[3] creation date > YYYY/MM/DD" << endl;
+					cout << "[4] Blocked accounts" << endl;
+					cout << "[5] Expired accounts" << endl;
+					int m;
+					do {
+						cout << "[#] ";
+						cin >> m;
+					} while (m < 1 || m > 5);
+					if (m == 2) {
+						cout << "Balance: ";
+						cin >> bank_balance;
 					}
-				}
-				cout << "[" << accounts.size() + 1 << "] Back" << endl;
-				int p;
-				do {
-					cout << "[#] ";
-					cin >> p;
-				} while (p <= 0 || p > accounts.size() + 1);
-				if (p == accounts.size() + 1) {
-					continue;
-				}
-				p--;
-				bankAccountSetting(accounts[p].first,accounts[p].second);
+					else if (m == 3) {
+						while (true) {
+							try {
+								cout << "Date(YYYY MM DD): ";
+								int year, month, day;
+								cin >> ws >> year >> month >> day;
+								bank_date = date(year, month, day);
+								break;
+							}
+							catch (dateException ex) {
+								cout << ex.what() << endl;
+							}
+						}
+					}
+					m--;
+					bool (*cons[5])(account* acc) = { bank_all_con,bank_balance_con,bank_date_con,bank_block_con,bank_expire_con };
+					auto accounts = u->getAccountsByCondition(cons[m]);
+					if (accounts.empty()) {
+						cout << "We dont have any accounts" << endl;
+					}
+					else {
+						cout << "------------------------------------------------------------" << endl;
+						for (int i = 0; i < accounts.size(); i++) {
+							cout << "[" << i + 1 << "] " << accounts[i].second->getId() << endl;
+							cout << "Type: ";
+							switch (accounts[i].second->getType())
+							{
+							case mode::SHORTTERM:
+								cout << "Short term" << endl;
+								break;
+							case mode::LONGTERM:
+								cout << "Long term" << endl;
+								break;
+							case mode::GOODLOAN:
+								cout << "Good loan" << endl;
+								break;
+							default:
+								cout << "Undefined" << endl;
+								break;
+							}
+							cout << "Status: ";
+							switch (accounts[i].second->getSituation())
+							{
+							case status::ONLINE:
+								cout << "Online" << endl;
+								break;
+							case status::BLOCK:
+								cout << "Block" << endl;
+								break;
+							case status::EXPIRE:
+								cout << "Expire" << endl;
+								break;
+							case status::NOTVERIFY:
+								cout << "Not verify" << endl;
+								break;
+							default:
+								cout << "Undefined" << endl;
+								break;
+							}
+							cout << "Balance: " << accounts[i].second->getBalance() << endl;
+							cout << "Creation date: ";
+							accounts[i].second->getCEDate().first.print(style::YYYY_MM_DD);
+							cout << "Expire date: ";
+							accounts[i].second->getCEDate().second.print(style::YYYY_MM_DD);
+							cout << "------------------------------------------------------------" << endl;
+						}
+					}
+					cout << "[" << accounts.size() + 1 << "] Back" << endl;
+					int p;
+					do {
+						cout << "[#] ";
+						cin >> p;
+					} while (p <= 0 || p > accounts.size() + 1);
+					if (p == accounts.size() + 1) {
+						continue;
+					}
+					p--;
+					bankAccountSetting(accounts[p].first, accounts[p].second);
 				}
 				else if (n == 3) {
 					auto list = u->getApplicationList();
@@ -896,3 +987,4 @@ void bankAccountSetting(person* p,account* a) {
 		}
 	}
 }
+//handle exceptions

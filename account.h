@@ -70,7 +70,6 @@ public:
 		balance = 0;
 		type = mode::SHORTTERM;
 		situation = status::NOTVERIFY;
-		accounts.push_back(this);
 	}
 	~account() {
 		for (int i = 0; i < accounts.size(); i++) {
@@ -97,32 +96,24 @@ public:
 		expireDate = old.expireDate;
 		type = old.type;
 		situation = old.situation;
+		accounts.push_back(this);
 	}
 	account& operator=(const account& old) {
 		throw accountEX;
 	}
 	void setBalance(double b) {
-		if (*date::getNow() == expireDate) {
-			situation = status::EXPIRE;
-			throw accountEX;
-		}
+		if (situation == status::EXPIRE) throw accountEX;
 		if (b >= 0 && situation==status::ONLINE) balance = b;
 	}
 	void setType(mode type) {
-		if (*date::getNow() == expireDate) {
-			situation = status::EXPIRE;
-			throw accountEX;
-		}
-		int delta = date::deltaTime(creationDate, *date::getNow());
+		if (situation == status::EXPIRE) throw accountEX;
+		int delta = date::deltaTime(*date::getNow(), creationDate);
 		this->type = type;
 		setBalance( balance + balance * getProfit() * delta );
 		creationDate = *date::getNow();
 	}
 	void setSituation(status situation) {
-		if (*date::getNow() == expireDate) {
-			situation = status::EXPIRE;
-			throw accountEX;
-		}
+		if (this->situation == status::EXPIRE) throw accountEX;
 		this->situation = situation;
 	}
 	string getId() {
@@ -141,12 +132,13 @@ public:
 		return pair<date, date>(creationDate, expireDate);
 	}
 	void addProfit() {
-		if (creationDate == expireDate) throw accountEX;
-		int delta = date::deltaTime(creationDate, *date::getNow());
+		if (situation == status::EXPIRE) throw accountEX;
+		int delta = date::deltaTime(*date::getNow(),creationDate);
 		if (delta > 0) {
 			setBalance( balance + balance * getProfit() * delta);
 		}
 	}
+	friend void checkExpire();
 };
 vector<account*> account::accounts;
 #endif

@@ -10,7 +10,8 @@
 using namespace std;
 enum class code {
 	ONLINE,
-	OFFLINE
+	OFFLINE,
+	BLOCK
 };
 enum class loginCode {
 	SUCCESS,
@@ -121,6 +122,7 @@ public:
 		person* p = found(username);
 		if (!p) return pair<loginCode, person*>(loginCode::WRONGUSER,nullptr);
 		if(p->password!=password) return pair<loginCode, person*>(loginCode::WRONGPASS, nullptr);
+		if (p->isOnline == code::BLOCK) throw personEX;
 		if (p->isOnline == code::ONLINE) p->logout();
 		if (!p->timeOfADs->empty() && p->timeOfADs->back().second != *date::getNow()) {
 			p->addProfit();
@@ -152,9 +154,11 @@ public:
 		return *accounts;
 	}
 	void setName(string name) {
+		if (isOnline == code::BLOCK) throw personEX;
 		this->name = name;
 	}
 	void setBirthDate(date birthDate) {
+		if (isOnline == code::BLOCK) throw personEX;
 		this->birthDate = birthDate;
 	}
 	void setIsOnline(code isOnline) {
@@ -172,13 +176,16 @@ public:
 		}
 	}
 	void setUsername(string username) {
+		if (isOnline == code::BLOCK) throw personEX;
 		if (found(username))throw personEX;
 		this->username = username;
 	}
 	void setPassword(string password) {
+		if (isOnline == code::BLOCK) throw personEX;
 		this->password = password;
 	}
 	bool moveMoney(string f, string s, double balance) {
+		if (isOnline == code::BLOCK) throw personEX;
 		if (isOnline == code::OFFLINE)return false;
 		if (balance < 0) return false;
 		account * first=nullptr,* second=nullptr;
@@ -195,11 +202,12 @@ public:
 		return true;
 	}
 	account * craeteNewAccount(mode type, double balance) {
-		if (isOnline == code::OFFLINE) throw personEX;
+		if (isOnline == code::BLOCK) throw personEX;
 		accounts->push_back(new account(type, balance));
 		return accounts->back();
 	}
 	void deleteBankAccount(account* a) {
+		if (isOnline == code::BLOCK) throw personEX;
 		for (int i = 0; i < accounts->size(); i++) {
 			if (a == (*accounts)[i]) {
 				accounts->erase(accounts->begin() + i);

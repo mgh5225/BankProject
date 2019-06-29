@@ -31,6 +31,15 @@ public:
 		}
 		return list;
 	}
+	vector<pair<person*, account*>> getAccountsByCondition(bool (*con)(account* acc)) {
+		vector<pair<person*, account*>>list;
+		for (auto u : getUsers()) {
+			for (auto a : u->getAccounts()) {
+				if(con(a))list.push_back(pair<person*, account*>(u, a));
+			}
+		}
+		return list;
+	}
 	static void saveToFile() {
 		ofstream stream("persons",ios_base::binary);
 		if (!stream.is_open()) { return; }
