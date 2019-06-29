@@ -1,9 +1,10 @@
 #ifndef account_H
 #define account_H
-#include<iostream>
-#include<vector>
+#include <iostream>
+#include <vector>
 #include <utility>
-#include"date.h"
+#include <mutex>
+#include "date.h"
 using namespace std;
 enum class mode {
 	SHORTTERM,
@@ -29,6 +30,7 @@ public:
 }accountEX;
 class account {
 private:
+	mutex read_lock;
 	static string createID() {
 		string chr = "0123456789";
 		string temp;
@@ -112,12 +114,14 @@ public:
 	}
 	void setType(mode type) {
 		if (situation == status::EXPIRE) throw accountEX("Bank account has been expired");
+		if (this->type == type) return;
 		int delta = date::deltaTime(*date::getNow(), creationDate);
 		this->type = type;
 		setBalance( balance + balance * getProfit() * delta );
 		creationDate = *date::getNow();
 	}
 	void setSituation(status situation) {
+		lock_guard<mutex> lock(read_lock);
 		if (this->situation == status::EXPIRE) throw accountEX("Bank account has been expired");
 		this->situation = situation;
 	}
@@ -128,6 +132,7 @@ public:
 		return balance;
 	}
 	status getSituation() {
+		lock_guard<mutex> lock(read_lock);
 		return situation;
 	}
 	mode getType() {

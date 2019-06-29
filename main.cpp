@@ -1,7 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
-#include<string>
-#include<thread>
+#include <string>
+#include <thread>
 #include "admin.h"
 bool isExitTime = false;
 void checkExpire() {

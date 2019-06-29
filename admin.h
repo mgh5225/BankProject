@@ -1,9 +1,10 @@
 #ifndef admin_H
 #define admin_H
-#include"person.h"
+#include "person.h"
 class admin :public person {
 public:
 	admin():person(){}
+	~admin(){}
 	admin(string name, date birthDate, string username, string password):person(name,birthDate,username,password) {}
 	admin(const admin& old):person(old){}
 	vector<person*> getUsers() {

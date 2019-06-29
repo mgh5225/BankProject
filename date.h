@@ -1,8 +1,9 @@
 #ifndef date_H
 #define date_H
-#include<exception>
-#include<iostream>
+#include <exception>
+#include <iostream>
 #include <ctime>
+#include <mutex>
 using namespace std;
 enum class style {
 	YY_MM_DD,
@@ -22,6 +23,7 @@ public:
 	}
 }dateEX;
 class date {
+	static mutex read_lock;
 	int year;
 	int month;
 	int day;
@@ -133,6 +135,7 @@ public:
 		}
 	}
 	static date* getNow() {
+		lock_guard<mutex> lock(read_lock);
 		std::time_t t = std::time(0);
 		std::tm* now = std::localtime(&t);
 		return new date(now->tm_year+1900, now->tm_mon+1, now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
@@ -158,4 +161,5 @@ public:
 		return deltaTime(*this,obj) >= 0;
 	}
 };
+mutex date::read_lock;
 #endif
